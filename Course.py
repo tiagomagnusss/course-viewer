@@ -11,13 +11,13 @@ class Course():
 
     def addData(self, period, vinculados=0, matriculados=0, ingressantes=0, diplomados=0, evadidos=0):        
         """ Adiciona propriedades a uma instância de curso. """
-        if vinculados > 0:
+        if vinculados >= 0:
             self.vinculados[period] = vinculados
-        if matriculados > 0:
+        if matriculados >= 0:
             self.matriculados[period] = matriculados
-        if ingressantes > 0:
+        if ingressantes >= 0:
             self.ingressantes[period] = ingressantes
-        if diplomados > 0:
+        if diplomados >= 0:
             self.diplomados[period] = diplomados
-        if evadidos > 0:
+        if evadidos >= 0:
             self.evadidos[period] = evadidos
