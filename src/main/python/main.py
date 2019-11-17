@@ -10,6 +10,14 @@ import numpy as np
 import pickle
 import sys
 
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __init__(self, number):
+        QTableWidgetItem.__init__(self, number, QTableWidgetItem.UserType)
+        self.__number = number
+
+    def __lt__(self, other):
+        return int(self.__number) < int(other.__number)
+
 class mainGUI(QWidget):
     def __init__(self, root, courses, periods):
         super().__init__()
@@ -53,8 +61,6 @@ class mainGUI(QWidget):
         self.tbData.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tbData.setAlternatingRowColors(True)        
 
-        # table selection change
-        self.tbData.doubleClicked.connect(self.on_click)
         self.tbData.setMaximumWidth(900)
 
         # coloca na tela
@@ -82,9 +88,28 @@ class mainGUI(QWidget):
         # coloca a tabela
         self.createTable()
 
+        # inclui a área de ordenar
+        vbTemp = QVBoxLayout()        
+        hbTemp0 = QHBoxLayout()
+        hbTemp = QHBoxLayout()
+
         # inclui o seletor de ano
         hbTemp1 = QHBoxLayout()
         hbTemp2 = QHBoxLayout()
+
+        self.cbOrder = QComboBox(self)
+        self.cbOrder.setEditable(False)        
+        self.cbOrder.setAutoFillBackground(True)
+        self.cbOrder.addItems(['Nome','Vinculados', 'Matriculados', 'Ingressantes', 'Diplomados', 'Evadidos'])
+        self.cbOrder.currentIndexChanged.connect(self.on_order)
+        
+        self.cbOrderDir = QComboBox(self)
+        self.cbOrderDir.setEditable(False)        
+        self.cbOrderDir.setAutoFillBackground(True)
+        self.cbOrderDir.addItems(['Asc', 'Desc'])
+        self.cbOrderDir.move(0, 50)
+        self.cbOrderDir.currentIndexChanged.connect(self.on_order)
+
         self.cbAno = QComboBox(self)
         self.cbAno.setEditable(False)        
         self.cbAno.setAutoFillBackground(True)
@@ -93,6 +118,11 @@ class mainGUI(QWidget):
         self.cbAnoTo = QComboBox(self)
         self.cbAnoTo.setEditable(False)        
         self.cbAnoTo.setAutoFillBackground(True)
+
+        lbOrder = QLabel('Ordenar por', self)
+        lbOrder.move(0, 0)
+        lbOrder.setMaximumHeight(60)
+        lbOrder.setMaximumWidth(60)
 
         lbTempAno = QLabel('De', self)
         lbTempAno.move(0, 0)
@@ -104,11 +134,22 @@ class mainGUI(QWidget):
         lbTempAno2.setMaximumHeight(10)
         lbTempAno2.setMaximumWidth(30)
 
+        # coloca as caixas no lugar
+        hbTemp0.addWidget(lbOrder)
+        hbTemp0.addWidget(self.cbOrder)
+        hbTemp.addWidget(self.cbOrderDir)
+        
+        vbTemp.addLayout(hbTemp0)
+        vbTemp.addLayout(hbTemp)
+        vbTemp.addWidget(self.cbOrderDir)
+        
         hbTemp1.addWidget(lbTempAno)
         hbTemp1.addWidget(self.cbAno)
         
         hbTemp2.addWidget(lbTempAno2)
         hbTemp2.addWidget(self.cbAnoTo)
+        #self.vbOptions.addLayout(hbTemp0)
+        self.vbOptions.addLayout(vbTemp)
         self.vbOptions.addLayout(hbTemp1)
         self.vbOptions.addLayout(hbTemp2)
 
@@ -173,12 +214,14 @@ class mainGUI(QWidget):
                 # trata diferente os dicts
                 if ( isinstance(prop, dict) ):
                     vals = np.array(list(prop.values()))
-                    self.tbData.setItem(x, y, QTableWidgetItem(str(np.sum(vals))))
+                    #self.tbData.setItem(x, y, QTableWidgetItem(str(np.sum(vals))))
+                    self.tbData.setItem(x, y, NumericTableWidgetItem(str(np.sum(vals))))
                     self.tbData.setItem(x, 7, QTableWidgetItem('-'))
                     self.tbData.setItem(x, 8, QTableWidgetItem('-'))
                 else:
                     self.tbData.setItem(x, y, QTableWidgetItem(str(prop)))
-        self.tbData.sortByColumn(1, Qt.AscendingOrder)
+        
+        self.on_order()
 
     @pyqtSlot()
     def on_update_year(self):
@@ -188,11 +231,6 @@ class mainGUI(QWidget):
             ano, semestre = date.split('/')
             if ( semestre == '1' and ano >= self.cbAno.currentText() ):
                 self.cbAnoTo.addItem(ano)
-
-    @pyqtSlot()
-    def on_click(self):
-        for currentQTableWidgetItem in self.tbData.selectedItems():
-            print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
     @pyqtSlot()
     def on_search(self):
@@ -235,15 +273,21 @@ class mainGUI(QWidget):
                 # cod, nome, vinc, mat, ing, dip, eva, ano, sem
                 self.tbData.setItem(x, 0, QTableWidgetItem(str(cod)))
                 self.tbData.setItem(x, 1, QTableWidgetItem(self.courses[cod].nome))
-                self.tbData.setItem(x, 2, QTableWidgetItem(str(data.vinculados[cod])))
-                self.tbData.setItem(x, 3, QTableWidgetItem(str(data.matriculados[cod])))
-                self.tbData.setItem(x, 4, QTableWidgetItem(str(data.ingressantes[cod])))
-                self.tbData.setItem(x, 5, QTableWidgetItem(str(data.diplomados[cod])))
-                self.tbData.setItem(x, 6, QTableWidgetItem(str(data.evadidos[cod])))
+                self.tbData.setItem(x, 2, NumericTableWidgetItem(str(data.vinculados[cod])))
+                self.tbData.setItem(x, 3, NumericTableWidgetItem(str(data.matriculados[cod])))
+                self.tbData.setItem(x, 4, NumericTableWidgetItem(str(data.ingressantes[cod])))
+                self.tbData.setItem(x, 5, NumericTableWidgetItem(str(data.diplomados[cod])))
+                self.tbData.setItem(x, 6, NumericTableWidgetItem(str(data.evadidos[cod])))
                 self.tbData.setItem(x, 7, QTableWidgetItem(str(data.ano)))
                 self.tbData.setItem(x, 8, QTableWidgetItem(str(data.period)))
                 x += 1
-        self.tbData.sortByColumn(1, Qt.AscendingOrder)
+        self.on_order()
+
+    @pyqtSlot()
+    def on_order(self):
+        map = {'Nome': 1, 'Vinculados': 2, 'Matriculados': 3, 'Ingressantes': 4, 'Diplomados': 5, 'Evadidos': 6}
+        dir = Qt.AscendingOrder if self.cbOrderDir.currentText() == 'Asc' else Qt.DescendingOrder
+        self.tbData.sortByColumn(map[self.cbOrder.currentText()], dir)
 
     @pyqtSlot()
     def on_plot(self):
@@ -313,7 +357,7 @@ if __name__ == '__main__':
             # trata os dicts diferente
             if ( isinstance(prop, dict) ):
                 v = np.array(list(prop.values()))
-                ex.tbData.setItem(x, y, QTableWidgetItem(str(np.sum(v))))
+                ex.tbData.setItem(x, y, NumericTableWidgetItem(str(np.sum(v))))
             else:
                 ex.tbData.setItem(x, y, QTableWidgetItem(str(prop)))
     
