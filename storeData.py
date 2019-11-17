@@ -27,7 +27,7 @@ for cod, nome, ano, periodo, vinculados, matriculados, ingressantes, diplomados,
 
     # se ainda não registrou o curso
     if cod not in courses.keys():
-        courses[cod] = Course(cod, nome)
+        courses[cod] = Course(cod, nome.upper())
 
     # se ainda não registrou a data
     if date not in periods.keys():
