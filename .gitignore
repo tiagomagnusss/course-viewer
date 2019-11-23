@@ -1,0 +1,9 @@
+venv/
+target/
+iframe_figures/
+dist/
+build/
+__pycache__/
+*build/
+*dist/
+*icons/
