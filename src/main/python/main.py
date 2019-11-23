@@ -1,14 +1,16 @@
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QComboBox, QRadioButton, QLabel, QAction, QFormLayout, QHBoxLayout, QVBoxLayout, QTableWidget, QTableView, QTableWidgetItem, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QComboBox, QRadioButton, QLabel, QAction, QFormLayout, QHBoxLayout, QVBoxLayout, QTableWidget, QTableView, QTableWidgetItem, QPushButton, QLineEdit
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QIcon, QColor
 from Course import *
 from Period import *
 from Trie import *
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import sys
+import os
 
 class NumericTableWidgetItem(QTableWidgetItem):
     def __init__(self, number):
@@ -21,15 +23,16 @@ class NumericTableWidgetItem(QTableWidgetItem):
 class mainGUI(QWidget):
     def __init__(self, root, courses, periods):
         super().__init__()
+        self.setWindowIcon(QIcon(os.path.dirname(__file__) + "/" + "randomico.ico"))
         self.title = 'Course Viewer'
-        self.left = 50
-        self.top = 50
+        self.left = 0
+        self.top = 0
         self.width = 1280
-        self.height = 720
+        self.height = 700
         self.root = root
         self.courses = courses
         self.periods = periods
-        self.filtered = []
+        self.filtered = []        
         self.initUI()
 
     def initUI(self):
@@ -43,7 +46,7 @@ class mainGUI(QWidget):
         self.setLayout(self.vbLayout)
 
         # e mostra a janela
-        self.show()
+        self.showMaximized()
 
     def createTable(self):
         """ Cria a tabela com as colunas """
@@ -51,7 +54,6 @@ class mainGUI(QWidget):
         self.tbData.setColumnCount(9)
         self.tbData.verticalHeader().hide()
         self.tbData.setSelectionBehavior(QTableView.SelectRows)
-        # CodCurso;NomeCurso;Ano;Periodo;Vinculados;Matriculados;Ingressantes;Diplomados;Evadidos
         colNames = ["Cód", "Nome", "Vinculados", "Matriculados", "Ingressantes", "Diplomados", "Evadidos", "Ano", "Semestre"]
         colWidths = [20, 250, 80, 80, 80, 80, 80, 20, 80]
         for width, id in zip(colWidths, range(len(colWidths))):
@@ -107,7 +109,6 @@ class mainGUI(QWidget):
         self.cbOrderDir.setEditable(False)        
         self.cbOrderDir.setAutoFillBackground(True)
         self.cbOrderDir.addItems(['Asc', 'Desc'])
-        self.cbOrderDir.move(0, 50)
         self.cbOrderDir.currentIndexChanged.connect(self.on_order)
 
         self.cbAno = QComboBox(self)
@@ -122,7 +123,7 @@ class mainGUI(QWidget):
         lbOrder = QLabel('Ordenar por', self)
         lbOrder.move(0, 0)
         lbOrder.setMaximumHeight(60)
-        lbOrder.setMaximumWidth(60)
+        lbOrder.setMaximumWidth(70)
 
         lbTempAno = QLabel('De', self)
         lbTempAno.move(0, 0)
@@ -155,7 +156,7 @@ class mainGUI(QWidget):
 
         # inclui o seletor de semestre
         hbTemp2 = QHBoxLayout()
-        self.rbSemestreAll = QRadioButton('Ambos semestres', self)
+        self.rbSemestreAll = QRadioButton('Ambos os semestres', self)
         self.rbSemestre1 = QRadioButton('Semestre 1', self)
         self.rbSemestre2 = QRadioButton('Semestre 2', self)
         self.rbSemestreAll.setChecked(True)
@@ -171,12 +172,26 @@ class mainGUI(QWidget):
         self.vbOptions.addWidget(self.btnFilter)
 
         # inclui botão de plotar
+        hbTemp3 = QHBoxLayout()
+        lbPlot = QLabel('Plotar', self)
+        lbPlot.move(0, 0)
+        lbPlot.setMaximumHeight(30)
+        lbPlot.setMaximumWidth(70)
+
+        self.cbPlot = QComboBox(self)
+        self.cbPlot.setEditable(False)        
+        self.cbPlot.setAutoFillBackground(True)
+        self.cbPlot.addItems(['Vinculados', 'Matriculados', 'Ingressantes', 'Diplomados', 'Evadidos'])
+
         self.btnPlot = QPushButton('Plotar selecionados', self)
         self.btnPlot.setMinimumHeight(40)
         self.btnPlot.setDisabled(True)
         self.btnPlot.clicked.connect(self.on_plot)
-        self.vbOptions.addWidget(self.btnPlot)
+        hbTemp3.addWidget(lbPlot)
+        hbTemp3.addWidget(self.cbPlot)
 
+        self.vbOptions.addLayout(hbTemp3)
+        self.vbOptions.addWidget(self.btnPlot)
         self.hbView.addLayout(self.vbOptions)
         self.vbLayout.addLayout(self.hbView)
 
@@ -222,6 +237,32 @@ class mainGUI(QWidget):
                     self.tbData.setItem(x, y, QTableWidgetItem(str(prop)))
         
         self.on_order()
+    
+    def plot_data(self, plotBy: str, data):
+        """ Plota os dados selecionados. """
+        x = list(data.keys())
+        plt.title('Número de alunos ' + plotBy.lower() + ' por curso, ano e semestre. (UFRGS)')
+        mapItems = {}
+        for item in data.values():
+            for nome, qtd in item.items():
+                if nome not in mapItems:
+                    mapItems[nome] = []
+
+                mapItems[nome].append(qtd)
+
+        try:
+            for nome, values in mapItems.items():
+                plt.plot(x, values, marker='.', label=nome)
+
+            plt.legend(loc='upper left', fontsize='xx-small', ncol=2)
+            plt.grid()
+            plt.show()
+        except ValueError:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Os cursos escolhidos não possuem os mesmos períodos selecionados.")
+            msg.setWindowTitle("Erro")
+            msg.exec_()
 
     @pyqtSlot()
     def on_update_year(self):
@@ -263,7 +304,10 @@ class mainGUI(QWidget):
         # filtra os dados dos períodos específicos
         x = 0
         for period in validPeriods:
-            data = self.periods[period]
+            if period in self.periods:
+                data = self.periods[period]
+            else:
+                continue
             # pra cada código de curso
             for cod in data.ingressantes.keys():
                 # se já tem dados filtrados, busca só os cod definidos
@@ -291,10 +335,10 @@ class mainGUI(QWidget):
 
     @pyqtSlot()
     def on_plot(self):
-        ids = []
-        years = []
-        semestre = '0' if self.rbSemestreAll.isChecked() else ('1' if self.rbSemestre1.isChecked() else '2')
+        map = {'Vinculados': 2, 'Matriculados': 3, 'Ingressantes': 4, 'Diplomados': 5, 'Evadidos': 6}
+        data = {}
         selIndexes = self.tbData.selectedIndexes()
+        itemId = map[self.cbPlot.currentText()]
 
         min = 0
         i = 9
@@ -305,26 +349,27 @@ class mainGUI(QWidget):
             row = selIndexes[min:i]
             min += 9
             i += 9
+
             # vinc, mat , ing, dipl, evad, ano, semestre
-            id = self.tbData.model().data(row[0])
             nome = self.tbData.model().data(row[1])
-            vinc = self.tbData.model().data(row[2])
-            mat = self.tbData.model().data(row[3])
-            ing = self.tbData.model().data(row[4])
-            dip = self.tbData.model().data(row[5])
-            evad = self.tbData.model().data(row[6])
+            value = self.tbData.model().data(row[itemId])
             ano = self.tbData.model().data(row[7])
             semestre = self.tbData.model().data(row[8])
-            ids.append(id)
-            years.append(ano)
-            
-        print(ids)
-        print(years)
+
+            key = str(ano) + "/" + str(semestre)
+            if key not in data:
+                data[key] = {}
+
+            if nome not in data[key]:
+                data[key][nome] = int(value)
+
+        if ( len(data) > 0 ):
+            self.plot_data(self.cbPlot.currentText(),data)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     palette = QPalette()
-    palette.setColor(QPalette.Background, Qt.darkGray)
+    palette.setColor(QPalette.Background, QColor(255, 204, 0, 230))
     app.setPalette(palette)
 
     # carrega o nodo da lista
@@ -362,8 +407,4 @@ if __name__ == '__main__':
                 ex.tbData.setItem(x, y, QTableWidgetItem(str(prop)))
     
     ex.tbData.sortByColumn(1, Qt.AscendingOrder)
-    sys.exit(app.exec_()) 
-
-    #window.resize(250, 150)
-    #exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
-    #sys.exit(exit_code)
+    sys.exit(app.exec_())

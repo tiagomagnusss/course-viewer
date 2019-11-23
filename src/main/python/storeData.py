@@ -1,24 +1,16 @@
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import dash
-import dash_table
 import pandas as pd
 import pickle
 from Course import *
 from Period import *
 from Trie import *
-import io
-import struct
-import matplotlib.pyplot as plt
 
-fileName = "quantitativo-alunos-graduacao.csv"
+fileName = "data.csv"
 data = pd.read_csv(fileName, sep=';')
 courses = {}
 periods = {}
 added = []
 
-# CodCurso;NomeCurso;Ano;Periodo;Vinculados;Matriculados;Ingressantes;Diplomados;Evadidos
 root = TrieNode('*', Course(0,'*'))
 
 # itera sobre as linhas do csv
@@ -55,4 +47,3 @@ with open('periods.p', 'wb') as f:
 # Salva a árvore TRIE num arquivo binário pickle
 with open('trie.p', 'wb') as f:
     pickle.dump(root, f)
-
