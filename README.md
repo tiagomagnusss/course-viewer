@@ -6,5 +6,10 @@ Tool for visualizing UFRGS' courses data.
 2. Execute o arquivo "storeData.py" (cmd: python storeData.py) na mesma pasta onde está o executável da aplicação;
 3. Execute a aplicação.
 
+# Exportando como executável
+1. Na raíz do projeto, rode "fbs freeze";
+2. A pasta executável estará em target\CourseViewer;
+3. Os arquivos pickle devem estar de onde está sendo chamado o executável.
+
 
 

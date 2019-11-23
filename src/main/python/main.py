@@ -407,8 +407,4 @@ if __name__ == '__main__':
                 ex.tbData.setItem(x, y, QTableWidgetItem(str(prop)))
     
     ex.tbData.sortByColumn(1, Qt.AscendingOrder)
-    sys.exit(app.exec_()) 
-
-    #window.resize(250, 150)
-    #exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
-    #sys.exit(exit_code)
+    sys.exit(app.exec_())
