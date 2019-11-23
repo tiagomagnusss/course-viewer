@@ -12,4 +12,9 @@ Tool for visualizing UFRGS' courses data.
 3. Os arquivos pickle devem estar de onde está sendo chamado o executável.
 
 
+# Histórico
+## Nov/2019 - 1.0.0
+Primeira versão!
+
+
 
